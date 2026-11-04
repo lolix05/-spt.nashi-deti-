@@ -1,0 +1,85 @@
+import random
+import time
+import pyautogui
+from pynput import mouse
+
+# Настройка безопасности: резкое движение мыши в угол остановит скрипт
+pyautogui.FAILSAFE = True
+
+button_coords = {}
+
+print("=== НАСТРОЙКА КООРДИНАТ (РЕЖИМ КЛИКОВ) ===")
+print(
+    "Просто наводи курсор на нужную кнопку и кликай по ней левой кнопкой мыши."
+)
+print("Скрипт сам поймает координату и перейдет к следующему шагу.\n")
+
+# Функция, которая ждет клик мыши и возвращает его координаты
+def wait_for_click(prompt_message):
+  print(prompt_message)
+  captured_pos = []
+
+  def on_click(x, y, button, pressed):
+    if pressed and button == mouse.Button.left:
+      captured_pos.append((x, y))
+      return False  # Останавливаем слушатель после первого клика
+
+  # Запускаем слушатель мыши
+  with mouse.Listener(on_click=on_click) as listener:
+    listener.join()
+
+  time.sleep(0.3)  #грамма пауза, чтобы избежать двойного клика
+  return captured_pos[0]
+
+# 1. Собираем координаты для чисел от 1 до 10
+for number in range(1, 11):
+  x, y = wait_for_click(
+      f"👉 Кликни мышкой по кнопке с числом: [{number}] (осталось собрать"
+      f" {11 - number})"
+  )
+  button_coords[number] = (x, y)
+  print(f"   ✓ Запомнил число {number} -> X={x}, Y={y}")
+
+print("\n---")
+
+# 2. Собираем координаты кнопки подтверждения
+confirm_x, confirm_y = wait_for_click(
+    "👉 Кликни мышкой по кнопке **ПОДТВЕРЖДЕНИЯ (Ответить)**"
+)
+print(f"   ✓ Запомнил кнопку подтверждения -> X={confirm_x}, Y={confirm_y}")
+
+print(
+    "\nВсе координаты успешно записаны! Автоматический режим стартует через 3"
+    " секунды..."
+)
+time.sleep(3)
+
+try:
+  while True:
+    # Выбираем случайное число от 1 до 10
+    random_number = random.randint(1, 10)
+    print(f"\nВыпало число: {random_number}")
+
+    # Берем координаты этого числа
+    x, y = button_coords[random_number]
+
+    # Ждем 5 секунд после клика на число
+    print("Жду 5 секунд...")
+    time.sleep(5)
+
+    # Кликаем по числу
+    pyautogui.moveTo(x, y, duration=0.2)
+    pyautogui.click()
+    print(f"Кликнул на число {random_number}")
+
+    # Нажимаем кнопку подтверждения
+    pyautogui.moveTo(confirm_x, confirm_y, duration=0.2)
+    pyautogui.click()
+    print("Нажал кнопку подтверждения.")
+
+    # Пауза перед следующим раундом
+    time.sleep(2)
+
+except KeyboardInterrupt:
+  print("\nСкрипт остановлен пользователем.")
+  #соси хуй система!!!
